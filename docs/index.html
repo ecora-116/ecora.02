@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoRA | Cada acción cuenta</title>
+  <meta name="description" content="EcoRA te ayuda a tirar la basura en su bote y a sumar puntos por hacerlo.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Ir al contenido</a>
+
+<header class="top">
+  <div class="nav">
+    <a class="logo" href="#inicio" aria-label="EcoRA, ir al inicio">🌿 Eco<span>RA</span></a>
+    <nav class="links" aria-label="Secciones">
+      <a href="#escanear">Escanear</a>
+      <a href="#ranking">Ranking</a>
+      <a href="#recompensas">Recompensas</a>
+      <a href="#como">Cómo funciona</a>
+    </nav>
+    <button class="btn ghost small" id="openAccount" type="button">Entrar</button>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+  <!-- INICIO -->
+  <section class="hero" id="inicio">
+    <div>
+      <p class="eyebrow">♻️ UNA ACCIÓN A LA VEZ</p>
+      <h1>Haz que cada acción cuente.</h1>
+      <p class="lead">
+        Tira tu basura en el bote que le corresponde, escanea su código y suma puntos.
+        Así de sencillo, y entre todos se nota.
+      </p>
+      <div class="hero-actions">
+        <a class="btn" href="#escanear">Escanear un bote</a>
+        <a class="btn light" href="#como">¿Cómo funciona?</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="bin plastico">🧴<small>PLÁSTICO</small></div>
+      <div class="bin metal">🥫<small>METAL</small></div>
+      <div class="bin papel">📦<small>PAPEL</small></div>
+    </div>
+  </section>
+
+  <!-- RESUMEN -->
+  <section class="stats" aria-label="Tu avance">
+    <article class="stat">
+      <span class="stat-icon" aria-hidden="true">⭐</span>
+      <div>
+        <p class="stat-label">Mis puntos</p>
+        <p class="stat-number" id="statPoints">0</p>
+      </div>
+    </article>
+    <article class="stat">
+      <span class="stat-icon" aria-hidden="true">♻️</span>
+      <div>
+        <p class="stat-label">Botes registrados</p>
+        <p class="stat-number" id="statScans">0</p>
+      </div>
+    </article>
+    <article class="stat">
+      <span class="stat-icon" aria-hidden="true">🏆</span>
+      <div>
+        <p class="stat-label">Mi lugar</p>
+        <p class="stat-number" id="statRank">—</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- CUENTA -->
+  <section class="card account" id="cuenta">
+    <div id="authOut">
+      <div class="account-intro">
+        <h2>Entra a tu cuenta</h2>
+        <p class="muted">Necesitas una cuenta para sumar puntos, canjear premios y aparecer en el ranking.</p>
+      </div>
+      <div class="auth">
+        <div class="tabs" role="tablist" aria-label="Tipo de acceso">
+          <button class="tab active" type="button" id="tabLogin" role="tab" aria-selected="true">Iniciar sesión</button>
+          <button class="tab" type="button" id="tabSignup" role="tab" aria-selected="false">Crear cuenta</button>
+        </div>
+        <form class="auth-form" id="authForm">
+          <label for="authUser">Usuario</label>
+          <input class="field" id="authUser" maxlength="30" autocomplete="username" placeholder="Ej. Ana M.">
+          <label for="authPass">Contraseña</label>
+          <input class="field" id="authPass" type="password" maxlength="64" autocomplete="current-password">
+          <div id="confirmWrap" hidden>
+            <label for="authPass2">Repite tu contraseña</label>
+            <input class="field" id="authPass2" type="password" maxlength="64" autocomplete="new-password">
+            <p class="small">Usa al menos 6 caracteres. Si la olvidas, el equipo EcoRA puede reiniciarla.</p>
+          </div>
+          <button class="btn" type="submit" id="authSubmit">Entrar</button>
+          <p class="notice error" id="authNote" role="alert"></p>
+        </form>
+      </div>
+    </div>
+
+    <div class="signed-in" id="authIn" hidden>
+      <span class="avatar" id="avatar" aria-hidden="true">E</span>
+      <div class="signed-text">
+        <h2 id="helloTitle">Hola</h2>
+        <p class="muted">Tu sesión queda abierta en este dispositivo por 30 días.</p>
+      </div>
+      <button class="btn ghost" type="button" id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </section>
+
+  <div class="duo">
+    <!-- ESCANEAR -->
+    <section class="card" id="escanear">
+      <p class="eyebrow dark">PASO 1</p>
+      <h2>Escanea el bote</h2>
+      <p class="muted">Apunta la cámara al código QR que está pegado en el bote.</p>
+
+      <div class="viewfinder" id="viewfinder">
+        <video id="video" playsinline muted></video>
+        <div class="frame" aria-hidden="true"><i></i></div>
+        <div class="cam-placeholder">
+          <span class="cam-icon" aria-hidden="true">📷</span>
+          <p>Aquí verás la cámara cuando la abras.</p>
+        </div>
+      </div>
+      <canvas id="canvas" hidden></canvas>
+
+      <div class="actions center">
+        <button class="btn" type="button" id="camBtn">Abrir cámara</button>
+      </div>
+      <p class="notice" id="camStatus" role="status"></p>
+
+      <form class="manual" id="manualForm" autocomplete="off">
+        <label for="binId">¿No funciona la cámara? Escribe el código del bote</label>
+        <div class="inline-form">
+          <input class="field" id="binId" maxlength="40" placeholder="Ej. ECORA-001">
+          <button class="btn secondary" type="submit">Confirmar</button>
+        </div>
+      </form>
+
+      <div class="result" id="result" hidden>
+        <p class="eyebrow dark">PASO 2</p>
+        <h3 id="resultTitle"></h3>
+        <p id="resultText" class="muted"></p>
+        <button class="btn" type="button" id="registerBtn">Ya tiré mi basura</button>
+        <p class="notice" id="resultNote"></p>
+        <p class="motive" id="motive" hidden></p>
+      </div>
+    </section>
+
+    <!-- METAS -->
+    <section class="card" id="metas">
+      <h2>Mis metas</h2>
+      <p class="muted">Cada meta es un pequeño reto. Cuando la cumples, sigues con la siguiente.</p>
+      <p id="goalText"></p>
+      <div class="progress" aria-hidden="true"><div id="goalBar"></div></div>
+      <p class="small">Los puntos que canjeas no te quitan avance en tus metas.</p>
+    </section>
+  </div>
+
+  <div class="duo">
+    <!-- RANKING -->
+    <section class="card" id="ranking">
+      <div class="section-head">
+        <div>
+          <h2>Ranking</h2>
+          <p class="muted">Quién suma más buenas acciones.</p>
+        </div>
+        <button class="btn ghost small" type="button" id="refreshRanking">Actualizar</button>
+      </div>
+      <ol class="ranking" id="rankingList"></ol>
+      <p class="notice" id="rankingNote"></p>
+    </section>
+
+    <!-- RECOMPENSAS -->
+    <section class="card" id="recompensas">
+      <h2>Recompensas</h2>
+      <p class="muted">Canjea tus puntos cuando quieras.</p>
+      <div class="rewards" id="rewardList"></div>
+    </section>
+  </div>
+
+  <!-- CÓMO FUNCIONA -->
+  <section class="card" id="como">
+    <h2>Cómo funciona</h2>
+    <p class="muted">Son cuatro pasos y no tardas ni un minuto.</p>
+    <ol class="steps">
+      <li>
+        <span>1</span>
+        <h3>Encuentra el bote</h3>
+        <p>Cada bote tiene su código QR pegado.</p>
+      </li>
+      <li>
+        <span>2</span>
+        <h3>Escanéalo</h3>
+        <p>Abre la cámara o escribe el código del bote.</p>
+      </li>
+      <li>
+        <span>3</span>
+        <h3>Tira tu basura</h3>
+        <p>Pon cada residuo en el bote que le toca.</p>
+      </li>
+      <li>
+        <span>4</span>
+        <h3>Gana puntos</h3>
+        <p>Sube en el ranking y canjea tus recompensas.</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- NUESTRAS METAS -->
+  <section class="why" aria-label="Por qué lo hacemos">
+    <article class="card">
+      <h3>Menos basura en el piso</h3>
+      <p class="muted">Cuando cada quien tira en su lugar, el patio y los pasillos se ven mejor.</p>
+    </article>
+    <article class="card">
+      <h3>Aprender separando</h3>
+      <p class="muted">Ver a qué bote va cada cosa nos ayuda a reciclar mejor, todos los días.</p>
+    </article>
+    <article class="card">
+      <h3>Hábitos que se quedan</h3>
+      <p class="muted">Las cosas pequeñas, repetidas, se vuelven costumbre. Esa es la idea.</p>
+    </article>
+  </section>
+
+</main>
+
+<footer>EcoRA · Cada acción cuenta.</footer>
+
+<nav class="tabbar" aria-label="Navegación rápida">
+  <a href="#inicio"><span aria-hidden="true">🏠</span>Inicio</a>
+  <a href="#escanear"><span aria-hidden="true">📷</span>Escanear</a>
+  <a href="#ranking"><span aria-hidden="true">🏆</span>Ranking</a>
+  <a href="#recompensas"><span aria-hidden="true">🎁</span>Premios</a>
+</nav>
+
+<dialog id="confirmDialog" aria-labelledby="confirmTitle">
+  <form method="dialog">
+    <h3 id="confirmTitle">¿Canjear?</h3>
+    <p class="muted" id="confirmText"></p>
+    <div class="actions end">
+      <button class="btn ghost" value="cancel" type="submit">Cancelar</button>
+      <button class="btn" value="ok" type="submit">Sí, canjear</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
