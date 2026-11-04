@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>EcoRA | Asistente RA</title>
-<meta name="description" content="Asistente de EcoRA: la IA reconoce el residuo y una flecha señala el bote real correcto.">
+<meta name="description" content="Asistente de EcoRA: la IA encuentra el bote con la cámara y te lo señala.">
 <style>
 :root {
   --green: #247653;
@@ -13,7 +13,6 @@
   --red: #e0533d;
   --text: #25352d;
   --muted: #6b7a71;
-  --sheet-h: 240px;
 }
 * { box-sizing: border-box; }
 html, body {
@@ -36,6 +35,7 @@ button { cursor: pointer; }
   position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(0,0,0,.45) 0, transparent 18%, transparent 60%, rgba(0,0,0,.35) 100%);
 }
+#debug { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
 
 /* Barra superior */
 .top {
@@ -47,71 +47,39 @@ button { cursor: pointer; }
   color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; border: 0;
   background: rgba(0, 0, 0, .38); padding: 9px 13px; border-radius: 999px; backdrop-filter: blur(6px);
 }
+.pill.on { background: var(--lime); color: var(--dark); }
 .spacer { flex: 1; }
 .badge {
   font-size: 11px; font-weight: 800; letter-spacing: 1px; white-space: nowrap;
   background: rgba(139, 195, 74, .92); color: var(--dark); padding: 6px 10px; border-radius: 999px;
 }
-
-/* Paso 1: recuadro para reconocer el residuo */
-.reticle {
-  position: absolute; left: 50%; top: calc((100% - var(--sheet-h)) * .48);
-  width: min(62vw, 270px); aspect-ratio: 1; transform: translate(-50%, -50%);
-  z-index: 3; transition: transform .3s, opacity .3s;
-}
-.reticle i {
-  position: absolute; width: 22%; height: 22%;
-  border: 4px solid rgba(255, 255, 255, .9); transition: border-color .3s;
-}
-.reticle i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-radius: 18px 0 0 0; }
-.reticle i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; border-radius: 0 18px 0 0; }
-.reticle i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 18px; }
-.reticle i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; border-radius: 0 0 18px 0; }
-.reticle .scanline {
-  position: absolute; left: 8%; right: 8%; height: 3px; top: 8%; opacity: 0;
-  background: var(--lime); box-shadow: 0 0 14px 2px var(--lime); border-radius: 3px;
-}
-.reticle.searching .scanline { opacity: .9; animation: scan 1.6s ease-in-out infinite; }
-@keyframes scan { 0%, 100% { top: 8%; } 50% { top: 90%; } }
 .live {
-  position: absolute; left: 50%; top: calc(100% + 12px); transform: translateX(-50%);
-  white-space: nowrap; font-size: 13px; font-weight: 700;
-  background: rgba(0, 0, 0, .5); padding: 6px 12px; border-radius: 999px;
+  position: absolute; left: 50%; top: calc(70px + env(safe-area-inset-top)); transform: translateX(-50%);
+  z-index: 5; white-space: nowrap; font-size: 13px; font-weight: 700;
+  background: rgba(0, 0, 0, .5); padding: 7px 13px; border-radius: 999px;
 }
 
-/* Paso 2: marca sobre el bote real (se coloca donde está su QR) */
+/* Marca sobre el bote real (la coloca la IA) */
 .marker {
   position: absolute; z-index: 4; pointer-events: none;
-  border: 5px solid var(--lime); border-radius: 18px;
+  border: 5px solid var(--lime); border-radius: 22px;
   box-shadow: 0 0 0 3px rgba(0,0,0,.25), 0 0 30px 6px rgba(139, 195, 74, .55);
-  transition: left .12s linear, top .12s linear, width .12s linear, height .12s linear;
+  transition: left .25s ease-out, top .25s ease-out, width .25s ease-out, height .25s ease-out;
 }
-.marker.bad { border-color: var(--red); box-shadow: 0 0 0 3px rgba(0,0,0,.25), 0 0 30px 6px rgba(224, 83, 61, .55); }
 .marker .tag {
   position: absolute; left: 50%; top: calc(100% + 10px); transform: translateX(-50%);
   white-space: nowrap; font-size: 15px; font-weight: 800; padding: 8px 14px; border-radius: 999px;
   background: var(--lime); color: var(--dark); box-shadow: 0 8px 20px -8px rgba(0,0,0,.6);
 }
-.marker.bad .tag { background: var(--red); color: #fff; }
+.marker.flip .arrow { bottom: auto; top: calc(100% + 10px); }
+.marker.flip .tag { top: auto; bottom: calc(100% + 10px); }
+.marker.low .tag { top: auto; bottom: 8px; }
 .marker .arrow {
-  position: absolute; left: 50%; bottom: calc(100% + 12px);
+  position: absolute; left: 50%; bottom: calc(100% + 10px);
   width: 64px; height: 94px; transform: translateX(-50%);
   animation: bob .9s ease-in-out infinite; filter: drop-shadow(0 10px 10px rgba(0, 0, 0, .55));
 }
-.marker.bad .arrow { display: none; }
-.marker .cross {
-  position: absolute; inset: 0; display: none; place-items: center;
-  font-size: 64px; font-weight: 900; color: var(--red); text-shadow: 0 4px 16px rgba(0,0,0,.6);
-}
-.marker.bad .cross { display: grid; }
 @keyframes bob { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -16px); } }
-
-.goal {
-  position: absolute; left: 50%; top: calc(76px + env(safe-area-inset-top)); transform: translateX(-50%);
-  z-index: 5; white-space: nowrap; font-size: 15px; font-weight: 800;
-  background: #fff; color: var(--dark); padding: 9px 15px; border-radius: 999px;
-  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, .6);
-}
 
 /* Panel inferior */
 .sheet {
@@ -122,9 +90,7 @@ button { cursor: pointer; }
 }
 .sheet h2 { margin: 0 0 4px; font-size: 21px; letter-spacing: -.3px; }
 .sheet p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
-.sheet .tip { margin-top: 8px; color: var(--green); font-weight: 600; }
-.sheet .warn { margin-top: 8px; color: var(--red); font-weight: 700; }
-.sheet .ok { margin-top: 8px; color: var(--green); font-weight: 800; }
+.sheet .ok { margin-top: 6px; color: var(--green); font-weight: 800; }
 .sheet label { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 6px; color: var(--text); }
 .field {
   width: 100%; padding: 12px; border: 1px solid #e3e9df; border-radius: 12px;
@@ -161,23 +127,18 @@ button { cursor: pointer; }
   <video id="video" playsinline muted></video>
   <div class="no-cam" id="noCam" hidden><p id="noCamText">No pudimos abrir la cámara.</p></div>
   <div class="shade"></div>
-  <canvas id="frame" width="224" height="224" hidden></canvas>
-  <canvas id="qrCanvas" hidden></canvas>
+  <canvas id="debug"></canvas>
+  <canvas id="crop" width="224" height="224" hidden></canvas>
 
   <header class="top">
     <a class="pill" href="index.html">← EcoRA</a>
     <span class="spacer"></span>
-    <span class="badge" id="badge">IA EN VIVO</span>
+    <span class="badge" id="badge">IA</span>
+    <button class="pill" type="button" id="debugBtn" aria-pressed="false" title="Ver lo que ve la IA">👁</button>
     <button class="pill" type="button" id="settingsBtn" aria-label="Modelo de IA">⚙</button>
   </header>
 
-  <div class="reticle" id="reticle" aria-hidden="true">
-    <i></i><i></i><i></i><i></i>
-    <div class="scanline"></div>
-    <div class="live" id="live" hidden></div>
-  </div>
-
-  <div class="goal" id="goal" hidden></div>
+  <div class="live" id="live" hidden></div>
 
   <div class="marker" id="marker" hidden aria-hidden="true">
     <svg class="arrow" viewBox="0 0 54 80">
@@ -187,10 +148,9 @@ button { cursor: pointer; }
           <stop offset="1" stop-color="#5aa02c"/>
         </linearGradient>
       </defs>
-      <path d="M17 2h20v42h15L27 78 2 44h15z" fill="url(#arrowGrad)" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+      <g id="arrowG"><path d="M17 2h20v42h15L27 78 2 44h15z" fill="url(#arrowGrad)" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></g>
     </svg>
-    <div class="cross">✕</div>
-    <div class="tag" id="markerTag"></div>
+    <div class="tag">Tira aquí tu basura</div>
   </div>
 
   <section class="sheet" id="sheet" aria-live="polite"></section>
@@ -201,56 +161,49 @@ button { cursor: pointer; }
 
 /* ==========================================================
    EcoRA · Asistente RA
-   Paso 1: la IA reconoce el residuo con la cámara.
-     - Modelo EcoRA (Teachable Machine), si se configuró su enlace.
-     - Si no, MobileNet (IA general): reconoce botellas y cartón.
-   Paso 2: la cámara busca el QR pegado en el bote REAL y dibuja
-     una flecha encima de él (verde si es el correcto, roja si no).
+   La IA busca el bote en la imagen de la cámara y pone una flecha encima.
+
+   Cómo ubica el bote: divide lo que ve la cámara en pedazos (una
+   cuadrícula), le pregunta a la IA "¿hay un bote aquí?" en cada pedazo,
+   y pone la flecha donde las respuestas son más altas.
+
+   - Modelo EcoRA (Teachable Machine, clases "Bote" y "Nada"), si se pegó su enlace en ⚙.
+   - Si no, la IA general (MobileNet), que ya conoce los botes de basura.
    ========================================================== */
 const CONFIG = {
   SCRIPT_URL: "https://script.google.com/macros/s/AKfycbz28oW8ic4iomKXCYPQ2XBXL5c_rwYW8ZHi0iL6apFqsItBJlhXuBQ7_2RfuPZlo5Qt/exec",
   STORAGE_KEY: "ecora.web.v3",      // misma sesión que la página principal
   MODEL_KEY: "ecora.tm.model",      // enlace del modelo de Teachable Machine
+  BIN_ID: "ECORA-PROTOTIPO",        // código del bote con el que se guardan los puntos
   TF_URL: "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js",
   MOBILENET_URL: "https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js",
-  JSQR_URL: "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js",
-  AI_INTERVAL_MS: 300,   // cada cuánto analiza el residuo
-  QR_INTERVAL_MS: 150,   // cada cuánto busca el bote
-  FRAMES_NEEDED: 3,      // cuadros seguidos iguales para confirmar el residuo
-  MIN_GENERAL: 0.30,     // seguridad mínima con la IA general
-  MIN_TM: 0.80,          // seguridad mínima con el modelo EcoRA
-  LOST_MS: 700,          // si no ve el bote este tiempo, quita la flecha
+  INTERVAL_MS: 250,      // pausa entre revisiones de la cámara
+  COLS: 3,               // columnas de la cuadrícula
+  TILE: 0.55,            // tamaño de cada pedazo (parte del lado corto de la imagen)
+  MIN_TM: 0.75,          // seguridad mínima con el modelo EcoRA
+  MIN_GENERAL: 0.18,     // seguridad mínima con la IA general
+  HITS_NEEDED: 2,        // revisiones seguidas viendo el bote para mostrar la flecha
+  LOST_MS: 1200,         // si deja de verlo este tiempo, quita la flecha
 };
 
-const WASTE = {
-  pet:      { name: "Botella de plástico", icon: "🧴", bin: "plastico", tip: "Vacíala y aplástala antes de tirarla." },
-  aluminio: { name: "Lata de aluminio",    icon: "🥫", bin: "metal",    tip: "Enjuágala y aplástala para que ocupe menos." },
-  carton:   { name: "Cartón",              icon: "📦", bin: "papel",    tip: "Dóblalo y revisa que esté seco y limpio." },
-};
-const BINS = {
-  plastico: { name: "Plásticos" },
-  metal:    { name: "Metales" },
-  papel:    { name: "Papel y cartón" },
-};
-
-/* Clases de la IA general (ImageNet) que cuentan para cada material */
-const GENERAL_MAP = [
-  { material: "pet",    words: ["water bottle", "pop bottle", "soda bottle", "water jug", "beer bottle", "wine bottle", "pill bottle", "plastic bag"] },
-  { material: "carton", words: ["carton", "packet", "envelope", "crate", "paper towel", "toilet tissue", "toilet paper"] },
-];
+/* Clases de la IA general (ImageNet) que cuentan como bote de basura */
+const GENERAL_BIN_WORDS = ["ashcan", "trash can", "garbage can", "wastebin", "dustbin", "trash barrel", "trash bin"];
+/* Nombres de clase del modelo EcoRA que cuentan como bote */
+const TM_BIN_WORDS = /bote|basura|contenedor|cesto|bin|trash/;
 
 const $ = (id) => document.getElementById(id);
 
-let phase = "loading";      // loading | searching | locating | paused | done | error
-let ai = null;              // { kind: "general" | "ecora", net, labels? }
-let qr = null;              // { kind: "native", detector } | { kind: "jsqr" }
+let phase = "loading";    // loading | searching | paused | done | error
+let ai = null;            // { kind: "general" | "ecora", net, binIndex? }
 let cameraReady = false;
-let aiTimer = null, qrTimer = null;
-let analyzing = false, scanningQr = false;
-let streak = { material: null, count: 0 };
-let current = null;         // residuo reconocido
-let found = null;           // { id, bin } bote correcto ya visto
+let loopTimer = null;
+let analyzing = false;
+let debugOn = false;
+let hits = 0;
 let lastSeen = 0;
+let seenOnce = false;
+let box = null;           // posición suavizada del bote en el video {cx, cy, s}
+let lastTiles = [];
 let busy = false;
 
 /* ---------- Utilidades ---------- */
@@ -264,12 +217,10 @@ function loadScript(url) {
     document.head.appendChild(s);
   });
 }
-function fitSheet() { $("stage").style.setProperty("--sheet-h", $("sheet").offsetHeight + "px"); }
 function storageGet(key) { try { return localStorage.getItem(key) || ""; } catch { return ""; } }
 function storageSet(key, value) {
   try { value ? localStorage.setItem(key, value) : localStorage.removeItem(key); } catch { /* sin almacenamiento */ }
 }
-
 function normalizeModelUrl(raw) {
   let url = String(raw || "").trim();
   if (!url) return "";
@@ -277,8 +228,7 @@ function normalizeModelUrl(raw) {
   url = url.split(/[?#]/)[0].replace(/(model\.json|metadata\.json)$/, "");
   return url.endsWith("/") ? url : url + "/";
 }
-
-/* El enlace del modelo puede venir en la dirección: ra.html?modelo=https://teachablemachine... */
+/* El enlace del modelo también puede venir en la dirección: ra.html?modelo=https://teachablemachine... */
 function getModelUrl() {
   const param = new URLSearchParams(location.search).get("modelo");
   if (param === "general") storageSet(CONFIG.MODEL_KEY, "");
@@ -288,23 +238,7 @@ function getModelUrl() {
   }
   return storageGet(CONFIG.MODEL_KEY);
 }
-
-/* Lee el QR de un bote: "ECORA-PLASTICO", o un enlace con ?bote=ECORA-PLASTICO */
-function parseBin(raw) {
-  let id = String(raw || "").trim();
-  try {
-    const url = new URL(id);
-    id = url.searchParams.get("bote") || url.pathname.split("/").filter(Boolean).pop() || "";
-  } catch { /* no es enlace */ }
-  if (!/^[A-Za-z0-9_-]{3,40}$/.test(id)) return null;
-  const up = id.toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  if (!up.startsWith("ECORA")) return null;
-  let bin = null;
-  if (/PLAST|PET/.test(up)) bin = "plastico";
-  else if (/METAL|LATA|ALUMIN/.test(up)) bin = "metal";
-  else if (/PAPEL|CARTON/.test(up)) bin = "papel";
-  return { id, bin };
-}
+const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 /* ---------- Cámara ---------- */
 async function startCamera() {
@@ -330,13 +264,12 @@ function showNoCam(text) {
   $("noCam").hidden = false;
 }
 
-/* ---------- IA: reconocer el residuo ---------- */
+/* ---------- Cargar la IA ---------- */
 async function loadAI() {
   const bar = (pct, text) => {
     const b = $("loadBar"); if (b) b.style.width = pct + "%";
     const t = $("loadText"); if (t && text) t.textContent = text;
   };
-
   bar(10, "Cargando el motor de IA…");
   await loadScript(CONFIG.TF_URL);
   await window.tf.ready();
@@ -347,236 +280,207 @@ async function loadAI() {
       bar(45, "Cargando el modelo EcoRA…");
       const net = await window.tf.loadLayersModel(modelUrl + "model.json");
       const meta = await fetch(modelUrl + "metadata.json").then((r) => r.json());
-      ai = { kind: "ecora", net, labels: meta.labels || [] };
+      const labels = meta.labels || [];
+      const binIndex = labels.findIndex((l) => TM_BIN_WORDS.test(norm(l)));
+      if (binIndex < 0) throw new Error("El modelo no tiene una clase llamada Bote");
+      ai = { kind: "ecora", net, binIndex, binLabel: labels[binIndex] };
     } catch {
       ai = null;
-      $("badge").textContent = "MODELO ECORA NO CARGÓ";
     }
   }
   if (!ai) {
     bar(45, "Cargando la IA general…");
     await loadScript(CONFIG.MOBILENET_URL);
-    const net = await window.mobilenet.load({ version: 2, alpha: 1.0 });
-    ai = { kind: "general", net };
+    ai = { kind: "general", net: await window.mobilenet.load({ version: 2, alpha: 1.0 }), modelFailed: Boolean(modelUrl) };
   }
 
-  bar(80, "Preparando el lector de botes…");
-  await loadQrReader();
-
-  bar(90, "Calentando la IA…");
-  await analyzeFrame(true);
+  bar(85, "Calentando la IA…");
+  await scoreCrop($("crop"));     // la primera pasada es la más lenta
   bar(100);
-  $("badge").textContent = ai.kind === "ecora" ? "IA ECORA EN VIVO" : "IA GENERAL EN VIVO";
+  $("badge").textContent = ai.kind === "ecora" ? "IA ECORA EN VIVO"
+    : ai.modelFailed ? "MODELO ECORA NO CARGÓ" : "IA GENERAL EN VIVO";
 }
 
-function grabFrame() {
-  const video = $("video");
-  const canvas = $("frame");
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  const w = video.videoWidth, h = video.videoHeight;
-  if (!w || !h) return null;
-  const size = Math.min(w, h) * 0.75;   // el centro de la imagen (el recuadro)
-  ctx.drawImage(video, (w - size) / 2, (h - size) / 2, size, size, 0, 0, 224, 224);
-  return canvas;
-}
-
-/** Devuelve { material, prob } o null si no ve ningún residuo. */
-async function analyzeFrame(warmup) {
-  const canvas = cameraReady ? grabFrame() : null;
-  const input = canvas || $("frame");
-
+/** ¿Qué tan seguro está de que hay un bote en esta imagen? (0 a 1) */
+async function scoreCrop(canvas) {
   if (ai.kind === "ecora") {
     const tf = window.tf;
     const out = tf.tidy(() => {
-      const img = tf.browser.fromPixels(input).toFloat();
+      const img = tf.browser.fromPixels(canvas).toFloat();
       return ai.net.predict(img.sub(127.5).div(127.5).expandDims(0));
     });
     const probs = await out.data();
     out.dispose();
-    if (warmup || !canvas) return null;
-    let best = 0;
-    for (let i = 1; i < probs.length; i++) if (probs[i] > probs[best]) best = i;
-    const material = materialFromLabel(ai.labels[best]);
-    return material && probs[best] >= CONFIG.MIN_TM ? { material, prob: probs[best] } : null;
+    return probs[ai.binIndex] || 0;
   }
-
-  const preds = await ai.net.classify(input, 5);
-  if (warmup || !canvas) return null;
-  const totals = {};
+  const preds = await ai.net.classify(canvas, 10);
+  let total = 0;
   preds.forEach((p) => {
     const name = p.className.toLowerCase();
-    const group = GENERAL_MAP.find((g) => g.words.some((w) => name.includes(w)));
-    if (group) totals[group.material] = (totals[group.material] || 0) + p.probability;
+    if (GENERAL_BIN_WORDS.some((w) => name.includes(w))) total += p.probability;
   });
-  const best = Object.keys(totals).sort((a, b) => totals[b] - totals[a])[0];
-  return best && totals[best] >= CONFIG.MIN_GENERAL ? { material: best, prob: Math.min(totals[best], 0.99) } : null;
+  return Math.min(total, 1);
 }
 
-/* Nombres de clase del modelo EcoRA: "PET", "Lata", "Carton", "Nada"… */
-function materialFromLabel(label) {
-  const l = String(label || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  if (/pet|plast|botella/.test(l)) return "pet";
-  if (/lata|alumin|metal/.test(l)) return "aluminio";
-  if (/carton|papel/.test(l)) return "carton";
-  return null;
-}
-
-function startAiLoop() {
-  clearInterval(aiTimer);
-  aiTimer = setInterval(async () => {
-    if (phase !== "searching" || analyzing || !cameraReady) return;
-    analyzing = true;
-    try {
-      const res = await analyzeFrame(false);
-      const live = $("live");
-      live.hidden = false;
-      live.textContent = res
-        ? "Veo: " + WASTE[res.material].name.toLowerCase() + " " + Math.round(res.prob * 100) + "%"
-        : "Acerca un residuo al recuadro";
-      if (res && res.material === streak.material) streak.count += 1;
-      else streak = { material: res ? res.material : null, count: res ? 1 : 0 };
-      if (res && streak.count >= CONFIG.FRAMES_NEEDED && phase === "searching") startLocating(res);
-    } catch {
-      /* un cuadro que falla no detiene la IA */
-    } finally {
-      analyzing = false;
-    }
-  }, CONFIG.AI_INTERVAL_MS);
-}
-
-/* ---------- Bote real: encontrar su QR en la imagen ---------- */
-async function loadQrReader() {
-  if ("BarcodeDetector" in window) {
-    try {
-      const formats = await window.BarcodeDetector.getSupportedFormats();
-      if (formats.includes("qr_code")) {
-        qr = { kind: "native", detector: new window.BarcodeDetector({ formats: ["qr_code"] }) };
-        return;
-      }
-    } catch { /* se usa jsQR */ }
-  }
-  await loadScript(CONFIG.JSQR_URL);
-  qr = { kind: "jsqr" };
-}
-
-/** Devuelve [{ text, points:[{x,y}×4] }] en pixeles del video. */
-async function readQrCodes() {
-  const video = $("video");
-  if (!cameraReady || video.readyState < 2) return [];
-  if (qr.kind === "native") {
-    const codes = await qr.detector.detect(video);
-    return codes.map((c) => ({ text: c.rawValue, points: c.cornerPoints || boxToPoints(c.boundingBox) }));
-  }
-  const vw = video.videoWidth, vh = video.videoHeight;
-  const scale = Math.min(1, 720 / Math.max(vw, vh));
-  const canvas = $("qrCanvas");
-  canvas.width = Math.round(vw * scale);
-  canvas.height = Math.round(vh * scale);
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const code = window.jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
-  if (!code) return [];
-  const l = code.location;
-  return [{
-    text: code.data,
-    points: [l.topLeftCorner, l.topRightCorner, l.bottomRightCorner, l.bottomLeftCorner]
-      .map((p) => ({ x: p.x / scale, y: p.y / scale })),
-  }];
-}
-function boxToPoints(b) {
-  return [{ x: b.x, y: b.y }, { x: b.x + b.width, y: b.y }, { x: b.x + b.width, y: b.y + b.height }, { x: b.x, y: b.y + b.height }];
-}
-
-/* Convierte puntos del video a la pantalla (el video usa object-fit: cover) */
-function toScreenRect(points) {
-  const video = $("video");
-  const vw = video.videoWidth, vh = video.videoHeight;
-  const ew = video.clientWidth, eh = video.clientHeight;
+/* ---------- Buscar el bote: revisar la imagen por pedazos ---------- */
+/* Solo se revisa la parte del video que se ve en la pantalla, sin lo que tapa el panel de abajo. */
+function visibleArea() {
+  const v = $("video");
+  const vw = v.videoWidth, vh = v.videoHeight, ew = v.clientWidth, eh = v.clientHeight;
   const scale = Math.max(ew / vw, eh / vh);
   const ox = (ew - vw * scale) / 2, oy = (eh - vh * scale) / 2;
-  const xs = points.map((p) => ox + p.x * scale);
-  const ys = points.map((p) => oy + p.y * scale);
-  const x1 = Math.min(...xs), x2 = Math.max(...xs), y1 = Math.min(...ys), y2 = Math.max(...ys);
-  const pad = (x2 - x1) * 0.18;
-  return { left: x1 - pad, top: y1 - pad, width: x2 - x1 + pad * 2, height: y2 - y1 + pad * 2 };
+  const topPx = 60;
+  const bottomPx = Math.min(eh * 0.45, $("sheet").offsetHeight);
+  const w = ew / scale;
+  const h = Math.max(eh * 0.3, eh - topPx - bottomPx) / scale;
+  return { x: (vw - w) / 2, y: (topPx - oy) / scale, w, h, scale, ox, oy };
 }
 
-function startQrLoop() {
-  clearInterval(qrTimer);
-  qrTimer = setInterval(async () => {
-    if (phase !== "locating" || scanningQr) return;
-    scanningQr = true;
-    try {
-      const codes = (await readQrCodes())
-        .map((c) => ({ ...c, bin: parseBin(c.text) }))
-        .filter((c) => c.bin);
-      if (!codes.length) {
-        if (Date.now() - lastSeen > CONFIG.LOST_MS) hideMarker();
-        return;
-      }
-      // Si se ven varios botes, primero el correcto
-      const target = WASTE[current.material].bin;
-      const pick = codes.find((c) => c.bin.bin === target) || codes[0];
-      lastSeen = Date.now();
-      showMarker(pick, pick.bin.bin === target);
-    } catch {
-      /* un cuadro que falla no detiene la búsqueda */
-    } finally {
-      scanningQr = false;
+function makeTiles(area) {
+  const s = Math.min(area.w, area.h) * CONFIG.TILE;
+  const cols = CONFIG.COLS;
+  const rows = Math.max(2, Math.min(5, Math.round(cols * area.h / area.w)));
+  const tiles = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cx = area.x + s / 2 + (cols === 1 ? 0 : (area.w - s) * c / (cols - 1));
+      const cy = area.y + s / 2 + (rows === 1 ? 0 : (area.h - s) * r / (rows - 1));
+      tiles.push({ cx, cy, s });
     }
-  }, CONFIG.QR_INTERVAL_MS);
+  }
+  // Un pedazo grande al centro, por si el bote está cerca y llena la pantalla
+  const big = Math.min(area.w, area.h) * 0.95;
+  tiles.push({ cx: area.x + area.w / 2, cy: area.y + area.h / 2, s: big, big: true });
+  return tiles;
 }
 
-function showMarker(code, correct) {
+async function scanFrame() {
+  const video = $("video");
+  if (!cameraReady || video.readyState < 2 || !video.videoWidth) return null;
+  const area = visibleArea();
+  const tiles = makeTiles(area);
+  const canvas = $("crop");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  for (const t of tiles) {
+    ctx.drawImage(video, t.cx - t.s / 2, t.cy - t.s / 2, t.s, t.s, 0, 0, 224, 224);
+    t.score = await scoreCrop(canvas);
+  }
+  lastTiles = tiles;
+  return { area, tiles };
+}
+
+/** Junta los pedazos con bote en una sola posición. */
+function locate(tiles) {
+  const min = ai.kind === "ecora" ? CONFIG.MIN_TM : CONFIG.MIN_GENERAL;
+  const small = tiles.filter((t) => !t.big);
+  const bigTile = tiles.find((t) => t.big);
+  const best = small.reduce((a, b) => (b.score > a.score ? b : a), small[0]);
+  let top = best.score;
+
+  if (top < min) {
+    // Bote muy cerca: no cabe en un pedazo, pero sí en el grande
+    if (bigTile && bigTile.score >= min) return { cx: bigTile.cx, cy: bigTile.cy, s: bigTile.s * 0.8, score: bigTile.score };
+    return null;
+  }
+  const near = small.filter((t) => t.score >= top * 0.5 && t.score >= min * 0.6);
+  let wx = 0, wy = 0, ws = 0;
+  near.forEach((t) => { const w = t.score * t.score; wx += t.cx * w; wy += t.cy * w; ws += w; });
+  const spread = Math.max(...near.map((t) => Math.hypot(t.cx - best.cx, t.cy - best.cy)), 0);
+  return { cx: wx / ws, cy: wy / ws, s: best.s * 0.8 + spread * 0.6, score: top };
+}
+
+function startLoop() {
+  clearTimeout(loopTimer);
+  const tick = async () => {
+    if (phase === "searching" && !analyzing) {
+      analyzing = true;
+      try {
+        const frame = await scanFrame();
+        if (frame) {
+          const found = locate(frame.tiles);
+          updateFound(found, frame.area);
+          if (debugOn) drawDebug(frame.area, frame.tiles);
+        }
+      } catch {
+        /* una revisión que falla no detiene la IA */
+      } finally {
+        analyzing = false;
+      }
+    }
+    loopTimer = setTimeout(tick, CONFIG.INTERVAL_MS);
+  };
+  tick();
+}
+
+/* ---------- Dibujar la flecha sobre el bote ---------- */
+function updateFound(found, area) {
+  const live = $("live");
+  live.hidden = false;
+
+  if (!found) {
+    hits = 0;
+    if (Date.now() - lastSeen > CONFIG.LOST_MS) {
+      $("marker").hidden = true;
+      box = null;
+      live.textContent = "Buscando el bote…";
+    }
+    return;
+  }
+  hits += 1;
+  lastSeen = Date.now();
+  live.textContent = "Bote " + Math.round(found.score * 100) + "%";
+  // Suaviza el movimiento para que la flecha no tiemble
+  box = box
+    ? { cx: box.cx * 0.5 + found.cx * 0.5, cy: box.cy * 0.5 + found.cy * 0.5, s: box.s * 0.6 + found.s * 0.4 }
+    : { ...found };
+  if (hits < CONFIG.HITS_NEEDED && $("marker").hidden) return;
+
   const m = $("marker");
-  const r = toScreenRect(code.points);
-  Object.assign(m.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" });
-  m.classList.toggle("bad", !correct);
-  const binName = code.bin.bin ? BINS[code.bin.bin].name : code.bin.id;
-  $("markerTag").textContent = correct ? "✓ Tíralo aquí" : "✕ Aquí no: " + binName;
+  const size = box.s * area.scale;
+  const x = area.ox + box.cx * area.scale - size / 2;
+  const y = area.oy + box.cy * area.scale - size / 2;
+  Object.assign(m.style, { left: x + "px", top: y + "px", width: size + "px", height: size + "px" });
+  // Si el bote está muy arriba, la flecha va abajo y apunta hacia arriba
+  const flip = y < 130;
+  m.classList.toggle("flip", flip);
+  // Si el bote está muy abajo, el letrero va dentro del recuadro para que no lo tape el panel
+  m.classList.toggle("low", !flip && y + size + 50 > $("stage").clientHeight - $("sheet").offsetHeight);
+  if (flip) $("arrowG").setAttribute("transform", "rotate(180 27 40)");
+  else $("arrowG").removeAttribute("transform");
   m.hidden = false;
 
-  if (correct) {
-    if (!found && navigator.vibrate) navigator.vibrate([60, 40, 60]);
-    found = { id: code.bin.id, bin: code.bin.bin };
-    updateLocatingSheet("ok");
-  } else if (!found) {
-    updateLocatingSheet("wrong", binName);
+  if (!seenOnce) {
+    seenOnce = true;
+    if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    showSearching();
   }
 }
 
-function hideMarker() {
-  $("marker").hidden = true;
+function drawDebug(area, tiles) {
+  const c = $("debug");
+  const rect = c.getBoundingClientRect();
+  c.width = rect.width; c.height = rect.height;
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.font = "bold 13px system-ui";
+  tiles.filter((t) => !t.big).forEach((t) => {
+    const s = t.s * area.scale * 0.42;  // se dibuja más chico para que no se encimen
+    const x = area.ox + t.cx * area.scale, y = area.oy + t.cy * area.scale;
+    ctx.fillStyle = `rgba(139,195,74,${Math.min(0.65, t.score * 0.75)})`;
+    ctx.strokeStyle = "rgba(255,255,255,.55)";
+    ctx.fillRect(x - s / 2, y - s / 2, s, s);
+    ctx.strokeRect(x - s / 2, y - s / 2, s, s);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(Math.round(t.score * 100) + "%", x - 14, y + 5);
+  });
 }
 
-/* ---------- Fases ---------- */
-function search() {
-  phase = "searching";
-  current = null;
-  found = null;
-  streak = { material: null, count: 0 };
-  hideMarker();
-  $("goal").hidden = true;
-  const reticle = $("reticle");
-  reticle.hidden = false;
-  reticle.classList.add("searching");
-  showSearching();
-}
-
-function startLocating(res) {
-  phase = "locating";
-  current = { material: res.material, prob: res.prob };
-  found = null;
-  lastSeen = 0;
-  const w = WASTE[res.material];
-  $("reticle").hidden = true;
-  $("live").hidden = true;
-  const goal = $("goal");
-  goal.textContent = `${w.icon} ${w.name} · ${Math.round(res.prob * 100)}% → ${BINS[w.bin].name}`;
-  goal.hidden = false;
-  if (navigator.vibrate) navigator.vibrate(60);
-  updateLocatingSheet("looking");
+function toggleDebug() {
+  debugOn = !debugOn;
+  $("debugBtn").classList.toggle("on", debugOn);
+  $("debugBtn").setAttribute("aria-pressed", String(debugOn));
+  if (!debugOn) { const c = $("debug"); c.getContext("2d").clearRect(0, 0, c.width, c.height); }
+  else if (lastTiles.length && cameraReady) drawDebug(visibleArea(), lastTiles);
 }
 
 /* ---------- Panel inferior ---------- */
@@ -585,52 +489,37 @@ function showLoading() {
     <h2>Preparando la IA…</h2>
     <p id="loadText">Cargando el motor de IA…</p>
     <div class="bar"><div id="loadBar"></div></div>`;
-  fitSheet();
 }
 
 function showSearching() {
-  const hint = ai && ai.kind === "general"
-    ? "La IA general reconoce botellas y cartón. Para latas, usa el modelo EcoRA (⚙)."
-    : "Pon el residuo dentro del recuadro, con buena luz.";
-  $("sheet").innerHTML = `<h2>1. Muestra tu residuo</h2><p>${hint}</p>`;
-  fitSheet();
-}
-
-let lastSheetState = "";
-function updateLocatingSheet(state, binName) {
-  const key = state + (binName || "");
-  if (key === lastSheetState && $("doneBtn")) return;
-  lastSheetState = key;
-  const w = WASTE[current.material];
-  const target = BINS[w.bin].name;
-  let status = `<p>Apunta la cámara al bote. La flecha aparece sobre el de <strong>${target}</strong>.</p>`;
-  if (state === "wrong") status = `<p class="warn">Ese es el bote de ${binName}. Busca el de ${target}.</p>`;
-  if (state === "ok") status = `<p class="ok">¡Ese es! Tira tu ${w.name.toLowerCase()} en este bote.</p>`;
-  $("sheet").innerHTML = `
-    <h2>2. Busca el bote de ${target}</h2>
-    ${status}
-    <p class="tip">💡 ${w.tip}</p>
-    <div class="row">
-      <button class="btn secondary" type="button" id="againBtn">Otro residuo</button>
-      <button class="btn" type="button" id="doneBtn" ${found ? "" : "disabled"}>Ya lo tiré +20</button>
-    </div>`;
-  $("againBtn").addEventListener("click", () => { lastSheetState = ""; search(); });
+  phase = "searching";
+  const hint = !ai ? ""
+    : ai.kind === "ecora" ? "Usando nuestro modelo EcoRA."
+    : ai.modelFailed ? "Su modelo no cargó (revisen el enlace en ⚙ y que tenga la clase Bote). Mientras, uso la IA general."
+    : "Usando la IA general. Para que reconozca su bote prototipo, entrenen el modelo EcoRA (⚙).";
+  $("sheet").innerHTML = seenOnce ? `
+      <h2>¡Ahí está el bote!</h2>
+      <p class="ok">Sigue la flecha y tira tu basura.</p>
+      <p>${hint}</p>
+      <button class="btn" type="button" id="doneBtn">Ya lo tiré +20</button>`
+    : `
+      <h2>Busca el bote</h2>
+      <p>Mueve el celular despacio. Cuando la IA lo encuentre, una flecha te lo va a señalar.</p>
+      <p>${hint}</p>
+      <button class="btn" type="button" id="doneBtn" disabled>Ya lo tiré +20</button>`;
   $("doneBtn").addEventListener("click", registerPoints);
-  fitSheet();
 }
 
 function showResult(title, text, linkToAccount) {
   phase = "done";
-  lastSheetState = "";
-  hideMarker();
-  $("goal").hidden = true;
+  $("marker").hidden = true;
+  $("live").hidden = true;
   $("sheet").innerHTML = `
     <h2>${title}</h2>
     <p>${text}</p>
     ${linkToAccount ? '<a class="btn secondary" href="index.html#cuenta">Ir a mi cuenta</a>' : ""}
-    <button class="btn" type="button" id="againBtn">Otro residuo</button>`;
-  $("againBtn").addEventListener("click", search);
-  fitSheet();
+    <button class="btn" type="button" id="againBtn">Seguir buscando</button>`;
+  $("againBtn").addEventListener("click", () => { seenOnce = false; hits = 0; box = null; showSearching(); });
 }
 
 function showError(text) {
@@ -640,25 +529,25 @@ function showError(text) {
     <p>${text}</p>
     <button class="btn" type="button" id="retryBtn">Intentar de nuevo</button>`;
   $("retryBtn").addEventListener("click", () => location.reload());
-  fitSheet();
 }
 
 function showSettings() {
   const saved = storageGet(CONFIG.MODEL_KEY);
   const before = phase;
-  if (phase === "searching" || phase === "locating") phase = "paused";
-  hideMarker();
+  if (phase === "searching") phase = "paused";
+  const current = ai && ai.kind === "ecora" ? `modelo EcoRA (clase "${ai.binLabel}")` : "IA general (MobileNet)";
   $("sheet").innerHTML = `
     <h2>Modelo de IA</h2>
-    <p>Ahora: <strong>${ai && ai.kind === "ecora" ? "modelo EcoRA (Teachable Machine)" : "IA general (MobileNet)"}</strong></p>
+    <p>Ahora: <strong>${current}</strong></p>
     <label for="modelInput">Enlace del modelo de Teachable Machine</label>
-    <input class="field" id="modelInput" placeholder="https://teachablemachine.withgoogle.com/models/…" value="${saved}">
-    <p id="modelNote"></p>
+    <input class="field" id="modelInput" placeholder="https://teachablemachine.withgoogle.com/models/…">
+    <p id="modelNote">Debe tener una clase llamada <strong>Bote</strong> y otra llamada <strong>Nada</strong>.</p>
     <div class="row">
       <button class="btn secondary" type="button" id="generalBtn">Usar IA general</button>
       <button class="btn" type="button" id="saveModelBtn">Guardar</button>
     </div>
     <button class="btn secondary" type="button" id="closeBtn">Cerrar</button>`;
+  $("modelInput").value = saved;
   $("saveModelBtn").addEventListener("click", () => {
     const url = normalizeModelUrl($("modelInput").value);
     if (!url) {
@@ -670,12 +559,10 @@ function showSettings() {
   });
   $("generalBtn").addEventListener("click", () => { storageSet(CONFIG.MODEL_KEY, ""); location.reload(); });
   $("closeBtn").addEventListener("click", () => {
-    lastSheetState = "";
-    if (before === "locating" && current) { phase = "locating"; updateLocatingSheet(found ? "ok" : "looking"); }
-    else if (before === "loading") showLoading();
-    else search();
+    if (before === "loading") showLoading();
+    else if (before === "done") showResult("Listo", "Puedes seguir buscando el bote.");
+    else showSearching();
   });
-  fitSheet();
 }
 
 function popPoints(text) {
@@ -697,7 +584,7 @@ function getToken() {
 }
 
 async function registerPoints() {
-  if (busy || !current || !found) return;
+  if (busy || !seenOnce) return;
   const token = getToken();
   if (!token) {
     showResult("¡Bien hecho!", "Para que estos puntos cuenten, primero entra a tu cuenta en la página de EcoRA.", true);
@@ -713,7 +600,7 @@ async function registerPoints() {
     const res = await fetch(CONFIG.SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "registrar", token, bote: found.id }),
+      body: JSON.stringify({ action: "registrar", token, bote: CONFIG.BIN_ID }),
       signal: controller.signal,
     }).then((r) => r.json());
 
@@ -736,7 +623,7 @@ async function registerPoints() {
 /* ---------- Arranque ---------- */
 async function init() {
   $("settingsBtn").addEventListener("click", showSettings);
-  window.addEventListener("resize", fitSheet);
+  $("debugBtn").addEventListener("click", toggleDebug);
   showLoading();
   const camera = startCamera();
   try {
@@ -746,9 +633,8 @@ async function init() {
     return;
   }
   await camera;
-  if (phase === "loading") search();
-  startAiLoop();
-  startQrLoop();
+  if (phase === "loading") showSearching();
+  startLoop();
 }
 
 init();
