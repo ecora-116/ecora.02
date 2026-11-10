@@ -19,8 +19,8 @@ const CONFIG = {
 };
 
 const REWARDS = [
-  { name: "Beneficio básico", cost: 100, icon: "🎟️", desc: "Un premio sencillo para empezar a canjear." },
-  { name: "Recompensa especial", cost: 250, icon: "🎁", desc: "Para quienes ya llevan varias acciones." },
+  { name: "Beneficio básico", cost: 100, icon: "dulce", desc: "Un dulce para empezar a canjear." },
+  { name: "Recompensa especial", cost: 250, icon: "regalo", desc: "Para quienes ya llevan varias acciones." },
 ];
 
 const MESSAGES = [
@@ -579,7 +579,7 @@ function renderRewards() {
     const disabled = logged && missing > 0;
     return `
       <article class="reward">
-        <span class="reward-icon" aria-hidden="true">${r.icon}</span>
+        <img class="reward-icon" src="img/${r.icon}.png" alt="" aria-hidden="true">
         <div class="reward-body">
           <h3>${escapeHTML(r.name)}</h3>
           <p>${escapeHTML(r.desc)}</p>

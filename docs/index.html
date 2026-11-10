@@ -6,13 +6,15 @@
   <title>EcoRA | Cada acción cuenta</title>
   <meta name="description" content="EcoRA te ayuda a tirar la basura en su bote y a sumar puntos por hacerlo.">
   <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" href="img/icono.png">
+  <link rel="apple-touch-icon" href="img/icono.png">
 </head>
 <body>
 <a class="skip" href="#main">Ir al contenido</a>
 
 <header class="top">
   <div class="nav">
-    <a class="logo" href="#inicio" aria-label="EcoRA, ir al inicio">🌿 Eco<span>RA</span></a>
+    <a class="logo" href="#inicio" aria-label="ECO-RA, ir al inicio"><img src="img/logo.png" alt=""><span>ECO-RA</span></a>
     <nav class="links" aria-label="Secciones">
       <a href="#escanear">Escanear</a>
       <a href="#ranking">Ranking</a>
@@ -28,7 +30,7 @@
   <!-- INICIO -->
   <section class="hero" id="inicio">
     <div>
-      <p class="eyebrow">♻️ UNA ACCIÓN A LA VEZ</p>
+      <p class="eyebrow">UNA ACCIÓN A LA VEZ</p>
       <h1>Haz que cada acción cuente.</h1>
       <p class="lead">
         Tira tu basura en el bote que le corresponde, escanea su código y suma puntos.
@@ -39,31 +41,32 @@
         <a class="btn light" href="#como">¿Cómo funciona?</a>
       </div>
     </div>
-    <div class="hero-art" aria-hidden="true">
-      <div class="bin plastico">🧴<small>PLÁSTICO</small></div>
-      <div class="bin metal">🥫<small>METAL</small></div>
-      <div class="bin papel">📦<small>PAPEL</small></div>
+    <div class="hero-art">
+      <img class="hero-logo" src="img/logo.png" alt="Logo de ECO-RA: un globo terráqueo con el nombre del proyecto">
+      <img class="float f1" src="img/botella.png" alt="" aria-hidden="true">
+      <img class="float f2" src="img/lata.png" alt="" aria-hidden="true">
+      <img class="float f3" src="img/carton.png" alt="" aria-hidden="true">
     </div>
   </section>
 
   <!-- RESUMEN -->
   <section class="stats" aria-label="Tu avance">
     <article class="stat">
-      <span class="stat-icon" aria-hidden="true">⭐</span>
+      <span class="stat-icon" aria-hidden="true"><img src="img/estrella.png" alt=""></span>
       <div>
         <p class="stat-label">Mis puntos</p>
         <p class="stat-number" id="statPoints">0</p>
       </div>
     </article>
     <article class="stat">
-      <span class="stat-icon" aria-hidden="true">♻️</span>
+      <span class="stat-icon" aria-hidden="true"><img src="img/reciclaje.png" alt=""></span>
       <div>
         <p class="stat-label">Botes registrados</p>
         <p class="stat-number" id="statScans">0</p>
       </div>
     </article>
     <article class="stat">
-      <span class="stat-icon" aria-hidden="true">🏆</span>
+      <span class="stat-icon" aria-hidden="true"><img src="img/trofeo.png" alt=""></span>
       <div>
         <p class="stat-label">Mi lugar</p>
         <p class="stat-number" id="statRank">—</p>
@@ -73,7 +76,7 @@
 
   <!-- REALIDAD AUMENTADA -->
   <a class="ra-promo" href="ra.html">
-    <span class="ra-icon" aria-hidden="true">🕶️</span>
+    <span class="ra-icon" aria-hidden="true"><img src="img/botella.png" alt=""></span>
     <span class="ra-text">
       <strong>Prueba el asistente de Realidad Aumentada</strong>
       <span>Apunta la cámara: la IA encuentra el bote y una flecha te lo señala.</span>
@@ -197,22 +200,22 @@
     <p class="muted">Son cuatro pasos y no tardas ni un minuto.</p>
     <ol class="steps">
       <li>
-        <span>1</span>
+        <span>1</span><img src="img/carton.png" alt="">
         <h3>Encuentra el bote</h3>
         <p>Cada bote tiene su código QR pegado.</p>
       </li>
       <li>
-        <span>2</span>
+        <span>2</span><img src="img/botella.png" alt="">
         <h3>Escanéalo</h3>
         <p>Abre la cámara o escribe el código del bote.</p>
       </li>
       <li>
-        <span>3</span>
+        <span>3</span><img src="img/lata.png" alt="">
         <h3>Tira tu basura</h3>
         <p>Pon cada residuo en el bote que le toca.</p>
       </li>
       <li>
-        <span>4</span>
+        <span>4</span><img src="img/estrella.png" alt="">
         <h3>Gana puntos</h3>
         <p>Sube en el ranking y canjea tus recompensas.</p>
       </li>
@@ -240,10 +243,10 @@
 <footer>EcoRA · Cada acción cuenta.</footer>
 
 <nav class="tabbar" aria-label="Navegación rápida">
-  <a href="#inicio"><span aria-hidden="true">🏠</span>Inicio</a>
-  <a href="#escanear"><span aria-hidden="true">📷</span>Escanear</a>
-  <a href="#ranking"><span aria-hidden="true">🏆</span>Ranking</a>
-  <a href="#recompensas"><span aria-hidden="true">🎁</span>Premios</a>
+  <a href="#inicio"><span aria-hidden="true"><img src="img/reciclaje.png" alt=""></span>Inicio</a>
+  <a href="#escanear"><span aria-hidden="true"><img src="img/botella.png" alt=""></span>Escanear</a>
+  <a href="#ranking"><span aria-hidden="true"><img src="img/trofeo.png" alt=""></span>Ranking</a>
+  <a href="#recompensas"><span aria-hidden="true"><img src="img/regalo.png" alt=""></span>Premios</a>
 </nav>
 
 <dialog id="confirmDialog" aria-labelledby="confirmTitle">

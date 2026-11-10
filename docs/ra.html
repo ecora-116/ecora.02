@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>EcoRA | Asistente RA</title>
 <meta name="description" content="Asistente de EcoRA: la IA encuentra el bote con la cámara y te lo señala.">
+<link rel="icon" type="image/png" href="img/icono.png">
 <style>
 :root {
   --green: #247653;
@@ -183,6 +184,8 @@ const CONFIG = {
   MIN_TM: 0.75,          // seguridad mínima con el modelo EcoRA
   MIN_GENERAL: 0.18,     // seguridad mínima con la IA general
   HITS_NEEDED: 2,        // revisiones seguidas viendo el bote para mostrar la flecha
+  MIN_THROW: 0.75,       // seguridad mínima para "Tirando"
+  THROW_HITS: 2,         // revisiones seguidas viendo "Tirando" para sumar los puntos solos
   LOST_MS: 1200,         // si deja de verlo este tiempo, quita la flecha
 };
 
@@ -190,6 +193,8 @@ const CONFIG = {
 const GENERAL_BIN_WORDS = ["ashcan", "trash can", "garbage can", "wastebin", "dustbin", "trash barrel", "trash bin"];
 /* Nombres de clase del modelo EcoRA que cuentan como bote */
 const TM_BIN_WORDS = /bote|basura|contenedor|cesto|bin|trash/;
+/* Nombres de clase del modelo EcoRA que cuentan como "están tirando basura" */
+const TM_THROW_WORDS = /tir|deposit|echa|arroj|throw/;
 
 const $ = (id) => document.getElementById(id);
 
@@ -200,6 +205,7 @@ let loopTimer = null;
 let analyzing = false;
 let debugOn = false;
 let hits = 0;
+let throwHits = 0;
 let lastSeen = 0;
 let seenOnce = false;
 let box = null;           // posición suavizada del bote en el video {cx, cy, s}
@@ -281,9 +287,10 @@ async function loadAI() {
       const net = await window.tf.loadLayersModel(modelUrl + "model.json");
       const meta = await fetch(modelUrl + "metadata.json").then((r) => r.json());
       const labels = meta.labels || [];
-      const binIndex = labels.findIndex((l) => TM_BIN_WORDS.test(norm(l)));
+      const throwIndex = labels.findIndex((l) => TM_THROW_WORDS.test(norm(l)));
+      const binIndex = labels.findIndex((l, i) => i !== throwIndex && TM_BIN_WORDS.test(norm(l)));
       if (binIndex < 0) throw new Error("El modelo no tiene una clase llamada Bote");
-      ai = { kind: "ecora", net, binIndex, binLabel: labels[binIndex] };
+      ai = { kind: "ecora", net, binIndex, binLabel: labels[binIndex], throwIndex, throwLabel: labels[throwIndex] };
     } catch {
       ai = null;
     }
@@ -311,7 +318,9 @@ async function scoreCrop(canvas) {
     });
     const probs = await out.data();
     out.dispose();
-    return probs[ai.binIndex] || 0;
+    const thr = ai.throwIndex >= 0 ? probs[ai.throwIndex] || 0 : 0;
+    // Si están tirando basura, el bote también está ahí
+    return { bin: Math.min(1, (probs[ai.binIndex] || 0) + thr), thr };
   }
   const preds = await ai.net.classify(canvas, 10);
   let total = 0;
@@ -319,7 +328,7 @@ async function scoreCrop(canvas) {
     const name = p.className.toLowerCase();
     if (GENERAL_BIN_WORDS.some((w) => name.includes(w))) total += p.probability;
   });
-  return Math.min(total, 1);
+  return { bin: Math.min(total, 1), thr: 0 };   // la IA general no sabe si están tirando basura
 }
 
 /* ---------- Buscar el bote: revisar la imagen por pedazos ---------- */
@@ -363,7 +372,9 @@ async function scanFrame() {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   for (const t of tiles) {
     ctx.drawImage(video, t.cx - t.s / 2, t.cy - t.s / 2, t.s, t.s, 0, 0, 224, 224);
-    t.score = await scoreCrop(canvas);
+    const r = await scoreCrop(canvas);
+    t.score = r.bin;
+    t.thr = r.thr;
   }
   lastTiles = tiles;
   return { area, tiles };
@@ -399,6 +410,7 @@ function startLoop() {
         if (frame) {
           const found = locate(frame.tiles);
           updateFound(found, frame.area);
+          checkThrow(frame.tiles);
           if (debugOn) drawDebug(frame.area, frame.tiles);
         }
       } catch {
@@ -456,6 +468,20 @@ function updateFound(found, area) {
   }
 }
 
+/* ---------- ¿Ya tiraron la basura? (clase "Tirando" del modelo EcoRA) ---------- */
+function checkThrow(tiles) {
+  if (!ai || ai.kind !== "ecora" || ai.throwIndex < 0 || phase !== "searching") return;
+  const best = Math.max(...tiles.map((t) => t.thr || 0));
+  if (best < CONFIG.MIN_THROW) { throwHits = 0; return; }
+  throwHits += 1;
+  $("live").textContent = "Tirando basura " + Math.round(best * 100) + "%";
+  if (throwHits >= CONFIG.THROW_HITS && !busy) {
+    seenOnce = true;
+    if (navigator.vibrate) navigator.vibrate(120);
+    registerPoints(true);
+  }
+}
+
 function drawDebug(area, tiles) {
   const c = $("debug");
   const rect = c.getBoundingClientRect();
@@ -472,6 +498,10 @@ function drawDebug(area, tiles) {
     ctx.strokeRect(x - s / 2, y - s / 2, s, s);
     ctx.fillStyle = "#fff";
     ctx.fillText(Math.round(t.score * 100) + "%", x - 14, y + 5);
+    if (t.thr > 0.3) {
+      ctx.fillStyle = "#ffcf5c";
+      ctx.fillText("T " + Math.round(t.thr * 100) + "%", x - 18, y + 22);
+    }
   });
 }
 
@@ -494,6 +524,7 @@ function showLoading() {
 function showSearching() {
   phase = "searching";
   const hint = !ai ? ""
+    : ai.kind === "ecora" && ai.throwIndex >= 0 ? "Usando nuestro modelo EcoRA: cuando vea que tiras la basura, suma tus puntos solo."
     : ai.kind === "ecora" ? "Usando nuestro modelo EcoRA."
     : ai.modelFailed ? "Su modelo no cargó (revisen el enlace en ⚙ y que tenga la clase Bote). Mientras, uso la IA general."
     : "Usando la IA general. Para que reconozca su bote prototipo, entrenen el modelo EcoRA (⚙).";
@@ -512,6 +543,7 @@ function showSearching() {
 
 function showResult(title, text, linkToAccount) {
   phase = "done";
+  const dbg = $("debug"); dbg.getContext("2d").clearRect(0, 0, dbg.width, dbg.height);
   $("marker").hidden = true;
   $("live").hidden = true;
   $("sheet").innerHTML = `
@@ -519,7 +551,7 @@ function showResult(title, text, linkToAccount) {
     <p>${text}</p>
     ${linkToAccount ? '<a class="btn secondary" href="index.html#cuenta">Ir a mi cuenta</a>' : ""}
     <button class="btn" type="button" id="againBtn">Seguir buscando</button>`;
-  $("againBtn").addEventListener("click", () => { seenOnce = false; hits = 0; box = null; showSearching(); });
+  $("againBtn").addEventListener("click", () => { seenOnce = false; hits = 0; throwHits = 0; box = null; showSearching(); });
 }
 
 function showError(text) {
@@ -568,7 +600,8 @@ function showSettings() {
 function popPoints(text) {
   const el = document.createElement("div");
   el.className = "pop";
-  el.textContent = text;
+  el.innerHTML = '<img src="img/estrella.png" alt="" style="width:54px;height:54px;vertical-align:-10px;margin-right:6px">';
+  el.append(text);
   $("stage").appendChild(el);
   setTimeout(() => el.remove(), 1600);
 }
@@ -583,17 +616,18 @@ function getToken() {
   }
 }
 
-async function registerPoints() {
+async function registerPoints(auto) {
   if (busy || !seenOnce) return;
+  auto = auto === true;   // true cuando la IA vio que tiraste la basura
   const token = getToken();
   if (!token) {
     showResult("¡Bien hecho!", "Para que estos puntos cuenten, primero entra a tu cuenta en la página de EcoRA.", true);
     return;
   }
   busy = true;
+  phase = "saving";       // deja de revisar la cámara mientras se guarda
   const btn = $("doneBtn");
-  btn.disabled = true;
-  btn.textContent = "Guardando…";
+  if (btn) { btn.disabled = true; btn.textContent = auto ? "¡Te vi tirar la basura! Guardando…" : "Guardando…"; }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 25000);
   try {
@@ -608,7 +642,8 @@ async function registerPoints() {
       showResult("Tu sesión terminó", "Vuelve a entrar en la página de EcoRA para sumar puntos.", true);
     } else if (res.ok) {
       popPoints("+" + (res.puntos || 20));
-      showResult("¡+" + (res.puntos || 20) + " puntos!", "Ya llevas " + res.saldo + " puntos. Cada acción cuenta.");
+      showResult("¡+" + (res.puntos || 20) + " puntos!",
+        (auto ? "La IA vio que tiraste tu basura. " : "") + "Ya llevas " + res.saldo + " puntos. Cada acción cuenta.");
     } else {
       showResult("Un momento", res.error || "No se pudo registrar. Intenta de nuevo.");
     }
