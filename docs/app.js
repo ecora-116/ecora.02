@@ -579,7 +579,7 @@ function renderRewards() {
     const disabled = logged && missing > 0;
     return `
       <article class="reward">
-        <img class="reward-icon" src="img/${r.icon}.png" alt="" aria-hidden="true">
+        <img class="reward-icon" src="img/${r.icon}.png" alt="" aria-hidden="true" width="46" height="46">
         <div class="reward-body">
           <h3>${escapeHTML(r.name)}</h3>
           <p>${escapeHTML(r.desc)}</p>
