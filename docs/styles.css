@@ -357,3 +357,10 @@ dialog .muted { margin-bottom: 18px; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* Ayuda / soporte */
+.support select.field, .support textarea.field { width: 100%; font: inherit; }
+.support textarea.field { resize: vertical; min-height: 96px; }
+.support-mail { margin: 14px 0 0; }
+.support-mail a { color: var(--green); font-weight: 700; }
+footer a { color: inherit; font-weight: 700; }

@@ -20,6 +20,7 @@
       <a href="#ranking">Ranking</a>
       <a href="#recompensas">Recompensas</a>
       <a href="#como">Cómo funciona</a>
+      <a href="#ayuda">Ayuda</a>
     </nav>
     <button class="btn ghost small" id="openAccount" type="button">Entrar</button>
   </div>
@@ -223,6 +224,27 @@
   </section>
 
   <!-- NUESTRAS METAS -->
+  <!-- AYUDA / SOPORTE -->
+  <section class="card support" id="ayuda">
+    <h2>¿Algo no funciona? Te ayudamos</h2>
+    <p class="muted">Cuéntanos qué pasó y el equipo de EcoRA te responde por correo.</p>
+    <form id="supportForm" class="auth-form" novalidate>
+      <label for="supName">Tu nombre</label>
+      <input class="field" id="supName" autocomplete="name" placeholder="Ej. Arley">
+      <label for="supType">¿Qué pasó?</label>
+      <select class="field" id="supType">
+        <option>No puedo entrar a mi cuenta</option>
+        <option>No me dieron mis puntos</option>
+        <option>La cámara o la RA no funciona</option>
+        <option>Otra cosa</option>
+      </select>
+      <label for="supMsg">Cuéntanos más</label>
+      <textarea class="field" id="supMsg" rows="4" placeholder="Describe el problema con tus palabras"></textarea>
+      <button class="btn" type="submit">Enviar por correo</button>
+    </form>
+    <p class="muted support-mail">También puedes escribirnos directo a <a href="#" class="mailLink">el correo del equipo</a></p>
+  </section>
+
   <section class="why" aria-label="Por qué lo hacemos">
     <article class="card">
       <h3>Menos basura en el piso</h3>
@@ -240,7 +262,7 @@
 
 </main>
 
-<footer>EcoRA · Cada acción cuenta.</footer>
+<footer>EcoRA · Cada acción cuenta. · <a href="#ayuda">Ayuda</a></footer>
 
 <nav class="tabbar" aria-label="Navegación rápida">
   <a href="#inicio"><span aria-hidden="true"><img src="img/reciclaje.png" alt="" width="32" height="32"></span>Inicio</a>
@@ -262,6 +284,7 @@
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="soporte.js"></script>
 <script src="app.js?v=20261110"></script>
 </body>
 </html>
