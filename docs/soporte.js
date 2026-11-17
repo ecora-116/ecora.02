@@ -1,5 +1,5 @@
 // ===== CORREO DE SOPORTE: cámbialo aquí, es el único lugar =====
-var CORREO_SOPORTE = "PON_AQUI_EL_CORREO";
+var CORREO_SOPORTE = "ecora9505@gmail.com";
 // ================================================================
 (function () {
   var ok = CORREO_SOPORTE.indexOf("@") > 0;
