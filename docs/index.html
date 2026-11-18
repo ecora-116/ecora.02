@@ -231,6 +231,8 @@
     <form id="supportForm" class="auth-form" novalidate>
       <label for="supName">Tu nombre</label>
       <input class="field" id="supName" autocomplete="name" placeholder="Ej. Arley">
+      <label for="supEmail">Tu correo (para poder responderte)</label>
+      <input class="field" id="supEmail" type="email" autocomplete="email" placeholder="Ej. tucorreo@gmail.com">
       <label for="supType">¿Qué pasó?</label>
       <select class="field" id="supType">
         <option>No puedo entrar a mi cuenta</option>
@@ -240,7 +242,8 @@
       </select>
       <label for="supMsg">Cuéntanos más</label>
       <textarea class="field" id="supMsg" rows="4" placeholder="Describe el problema con tus palabras"></textarea>
-      <button class="btn" type="submit">Enviar por correo</button>
+      <button class="btn" type="submit" id="supSend">Enviar correo</button>
+      <p class="notice" id="supNotice" role="status" aria-live="polite"></p>
     </form>
     <p class="muted support-mail">También puedes escribirnos directo a <a href="#" class="mailLink">el correo del equipo</a></p>
   </section>
@@ -284,7 +287,7 @@
 
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="soporte.js"></script>
+<script src="soporte.js?v=20261118"></script>
 <script src="app.js?v=20261110"></script>
 </body>
 </html>

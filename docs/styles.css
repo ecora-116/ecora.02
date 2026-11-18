@@ -1,6 +1,6 @@
 @font-face {
   font-family: "MiLetra";
-  src: url("fonts/MiLetra.ttf?v=2") format("truetype");
+  src: url("fonts/MiLetra.ttf?v=3") format("truetype");
   font-display: swap;
 }
 
@@ -25,14 +25,11 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: "MiLetra", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  text-transform: lowercase;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 [hidden] { display: none !important; }
 button, input { font: inherit; }
-input, textarea, select { text-transform: none; }
-button { text-transform: lowercase; }
 button { cursor: pointer; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
