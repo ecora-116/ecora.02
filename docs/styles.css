@@ -1,6 +1,6 @@
 @font-face {
   font-family: "MiLetra";
-  src: url("fonts/MiLetra.ttf") format("truetype");
+  src: url("fonts/MiLetra.ttf?v=2") format("truetype");
   font-display: swap;
 }
 
