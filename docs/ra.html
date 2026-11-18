@@ -7,6 +7,12 @@
 <meta name="description" content="Asistente de EcoRA: la IA encuentra el bote con la cámara y te lo señala.">
 <link rel="icon" type="image/png" href="img/icono.png">
 <style>
+@font-face {
+  font-family: "MiLetra";
+  src: url("fonts/MiLetra.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
   --green: #247653;
   --dark: #173d30;
@@ -19,10 +25,13 @@
 html, body {
   margin: 0; height: 100%; overflow: hidden;
   background: #0d1f18; color: #fff;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: "MiLetra", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  text-transform: lowercase;
   -webkit-font-smoothing: antialiased;
 }
 button, input { font: inherit; }
+input, textarea, select { text-transform: none; }
+button { text-transform: lowercase; }
 button { cursor: pointer; }
 [hidden] { display: none !important; }
 
