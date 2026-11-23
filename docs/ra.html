@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>EcoRA | Asistente RA</title>
-<meta name="description" content="Asistente de EcoRA: la IA encuentra el bote con la cámara y te lo señala.">
+<title>RAV | Asistente RA</title>
+<meta name="description" content="Asistente de RAV: la IA encuentra el bote con la cámara y te lo señala.">
 <link rel="icon" type="image/png" href="img/icono.png">
 <style>
 @font-face {
@@ -138,7 +138,7 @@ button { cursor: pointer; }
   <canvas id="crop" width="224" height="224" hidden></canvas>
 
   <header class="top">
-    <a class="pill" href="index.html">← EcoRA</a>
+    <a class="pill" href="index.html">← RAV</a>
     <span class="spacer"></span>
     <span class="badge" id="badge">IA</span>
     <button class="pill" type="button" id="debugBtn" aria-pressed="false" title="Ver lo que ve la IA">👁</button>
@@ -167,14 +167,14 @@ button { cursor: pointer; }
 "use strict";
 
 /* ==========================================================
-   EcoRA · Asistente RA
+   RAV · Asistente RA
    La IA busca el bote en la imagen de la cámara y pone una flecha encima.
 
    Cómo ubica el bote: divide lo que ve la cámara en pedazos (una
    cuadrícula), le pregunta a la IA "¿hay un bote aquí?" en cada pedazo,
    y pone la flecha donde las respuestas son más altas.
 
-   - Modelo EcoRA (Teachable Machine, clases "Bote" y "Nada"), si se pegó su enlace en ⚙.
+   - Modelo RAV (Teachable Machine, clases "Bote" y "Nada"), si se pegó su enlace en ⚙.
    - Si no, la IA general (MobileNet), que ya conoce los botes de basura.
    ========================================================== */
 const CONFIG = {
@@ -187,7 +187,7 @@ const CONFIG = {
   INTERVAL_MS: 250,      // pausa entre revisiones de la cámara
   COLS: 3,               // columnas de la cuadrícula
   TILE: 0.55,            // tamaño de cada pedazo (parte del lado corto de la imagen)
-  MIN_TM: 0.75,          // seguridad mínima con el modelo EcoRA
+  MIN_TM: 0.75,          // seguridad mínima con el modelo RAV
   MIN_GENERAL: 0.18,     // seguridad mínima con la IA general
   HITS_NEEDED: 2,        // revisiones seguidas viendo el bote para mostrar la flecha
   MIN_THROW: 0.75,       // seguridad mínima para "Tirando"
@@ -197,9 +197,9 @@ const CONFIG = {
 
 /* Clases de la IA general (ImageNet) que cuentan como bote de basura */
 const GENERAL_BIN_WORDS = ["ashcan", "trash can", "garbage can", "wastebin", "dustbin", "trash barrel", "trash bin"];
-/* Nombres de clase del modelo EcoRA que cuentan como bote */
+/* Nombres de clase del modelo RAV que cuentan como bote */
 const TM_BIN_WORDS = /bote|basura|contenedor|cesto|bin|trash/;
-/* Nombres de clase del modelo EcoRA que cuentan como "están tirando basura" */
+/* Nombres de clase del modelo RAV que cuentan como "están tirando basura" */
 const TM_THROW_WORDS = /tir|deposit|echa|arroj|throw/;
 
 const $ = (id) => document.getElementById(id);
@@ -289,7 +289,7 @@ async function loadAI() {
   const modelUrl = getModelUrl();
   if (modelUrl) {
     try {
-      bar(45, "Cargando el modelo EcoRA…");
+      bar(45, "Cargando el modelo RAV…");
       const net = await window.tf.loadLayersModel(modelUrl + "model.json");
       const meta = await fetch(modelUrl + "metadata.json").then((r) => r.json());
       const labels = meta.labels || [];
@@ -310,8 +310,8 @@ async function loadAI() {
   bar(85, "Calentando la IA…");
   await scoreCrop($("crop"));     // la primera pasada es la más lenta
   bar(100);
-  $("badge").textContent = ai.kind === "ecora" ? "IA ECORA EN VIVO"
-    : ai.modelFailed ? "MODELO ECORA NO CARGÓ" : "IA GENERAL EN VIVO";
+  $("badge").textContent = ai.kind === "ecora" ? "IA RAV EN VIVO"
+    : ai.modelFailed ? "MODELO RAV NO CARGÓ" : "IA GENERAL EN VIVO";
 }
 
 /** ¿Qué tan seguro está de que hay un bote en esta imagen? (0 a 1) */
@@ -474,7 +474,7 @@ function updateFound(found, area) {
   }
 }
 
-/* ---------- ¿Ya tiraron la basura? (clase "Tirando" del modelo EcoRA) ---------- */
+/* ---------- ¿Ya tiraron la basura? (clase "Tirando" del modelo RAV) ---------- */
 function checkThrow(tiles) {
   if (!ai || ai.kind !== "ecora" || ai.throwIndex < 0 || phase !== "searching") return;
   const best = Math.max(...tiles.map((t) => t.thr || 0));
@@ -530,10 +530,10 @@ function showLoading() {
 function showSearching() {
   phase = "searching";
   const hint = !ai ? ""
-    : ai.kind === "ecora" && ai.throwIndex >= 0 ? "Usando nuestro modelo EcoRA: cuando vea que tiras la basura, suma tus puntos solo."
-    : ai.kind === "ecora" ? "Usando nuestro modelo EcoRA."
+    : ai.kind === "ecora" && ai.throwIndex >= 0 ? "Usando nuestro modelo RAV: cuando vea que tiras la basura, suma tus puntos solo."
+    : ai.kind === "ecora" ? "Usando nuestro modelo RAV."
     : ai.modelFailed ? "Su modelo no cargó (revisen el enlace en ⚙ y que tenga la clase Bote). Mientras, uso la IA general."
-    : "Usando la IA general. Para que reconozca su bote prototipo, entrenen el modelo EcoRA (⚙).";
+    : "Usando la IA general. Para que reconozca su bote prototipo, entrenen el modelo RAV (⚙).";
   $("sheet").innerHTML = seenOnce ? `
       <h2>¡Ahí está el bote!</h2>
       <p class="ok">Sigue la flecha y tira tu basura.</p>
@@ -573,7 +573,7 @@ function showSettings() {
   const saved = storageGet(CONFIG.MODEL_KEY);
   const before = phase;
   if (phase === "searching") phase = "paused";
-  const current = ai && ai.kind === "ecora" ? `modelo EcoRA (clase "${ai.binLabel}")` : "IA general (MobileNet)";
+  const current = ai && ai.kind === "ecora" ? `modelo RAV (clase "${ai.binLabel}")` : "IA general (MobileNet)";
   $("sheet").innerHTML = `
     <h2>Modelo de IA</h2>
     <p>Ahora: <strong>${current}</strong></p>
@@ -627,7 +627,7 @@ async function registerPoints(auto) {
   auto = auto === true;   // true cuando la IA vio que tiraste la basura
   const token = getToken();
   if (!token) {
-    showResult("¡Bien hecho!", "Para que estos puntos cuenten, primero entra a tu cuenta en la página de EcoRA.", true);
+    showResult("¡Bien hecho!", "Para que estos puntos cuenten, primero entra a tu cuenta en la página de RAV.", true);
     return;
   }
   busy = true;
@@ -645,7 +645,7 @@ async function registerPoints(auto) {
     }).then((r) => r.json());
 
     if (res.sesion === false) {
-      showResult("Tu sesión terminó", "Vuelve a entrar en la página de EcoRA para sumar puntos.", true);
+      showResult("Tu sesión terminó", "Vuelve a entrar en la página de RAV para sumar puntos.", true);
     } else if (res.ok) {
       popPoints("+" + (res.puntos || 20));
       showResult("¡+" + (res.puntos || 20) + " puntos!",

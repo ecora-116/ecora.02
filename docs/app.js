@@ -1,7 +1,7 @@
 "use strict";
 
 /* ==========================================================
-   EcoRA · página web
+   RAV · página web
    - Cuentas con usuario y contraseña (guardadas en Google Sheets).
    - Lee códigos QR con la cámara (BarcodeDetector o jsQR).
    - El servidor (Apps Script) decide los puntos, evita registros
@@ -43,7 +43,7 @@ const MESSAGES = [
   "Tu esfuerzo también merece reconocimiento.",
   "Mantener el orden es un trabajo en equipo.",
   "Una acción responsable puede marcar la diferencia.",
-  "EcoRA convierte la participación en una experiencia.",
+  "RAV convierte la participación en una experiencia.",
 ];
 
 const STORAGE_KEY = "ecora.web.v3";
@@ -359,7 +359,7 @@ async function readFrame() {
 function onCodeFound(text) {
   const bin = parseBinId(text);
   if (!bin) {
-    setCamStatus("Ese código no es de un bote de EcoRA. Busca el QR de tu bote.");
+    setCamStatus("Ese código no es de un bote de RAV. Busca el QR de tu bote.");
     return;
   }
   stopCamera();
@@ -538,7 +538,7 @@ function renderStats() {
   let percent = 100;
 
   if (next === undefined) {
-    $("goalText").textContent = "¡Superaste todas las metas! Eres parte de la comunidad EcoRA.";
+    $("goalText").textContent = "¡Superaste todas las metas! Eres parte de la comunidad RAV.";
   } else {
     percent = ((ganados - prev) / (next - prev)) * 100;
     $("goalText").textContent = "Te faltan " + (next - ganados) + " puntos para tu meta de " + next + ".";

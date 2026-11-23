@@ -54,7 +54,7 @@ var CORREO_SOPORTE = "ecora9505@gmail.com";
       .then(function (r) {
         if (r && r.ok) {
           f.reset();
-          avisar("¡Listo! Tu mensaje le llegó al equipo de EcoRA." + (correo ? " Te respondemos a tu correo." : ""), false);
+          avisar("¡Listo! Tu mensaje le llegó al equipo de RAV." + (correo ? " Te respondemos a tu correo." : ""), false);
         } else {
           avisar("No se pudo enviar" + (r && r.error ? " (" + r.error + ")" : "") + ". Intenta más tarde o escríbenos a " + CORREO_SOPORTE + ".", true);
         }
